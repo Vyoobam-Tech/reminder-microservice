@@ -5,6 +5,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import connectDB from "./config/db.js";
 import reminderRoutes from "./routes/reminderRoutes.js";
+import { startScheduler } from "./scheduler/scheduleReminder.js";
 
 const app = express();
 
@@ -31,5 +32,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5001;
 
 connectDB().then(() => {
+  startScheduler();
   app.listen(PORT, () => console.log(`Reminder service running on port ${PORT}`));
 });
