@@ -1,0 +1,40 @@
+{
+  "name": "reminder-microservice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "create-app": "node scripts/createApplication.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vyoobam-Tech/reminder-microservice.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Vyoobam-Tech/reminder-microservice/issues"
+  },
+  "homepage": "https://github.com/Vyoobam-Tech/reminder-microservice#readme",
+  "type": "module",
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "moment-timezone": "^0.6.4",
+    "mongoose": "^9.10.3",
+    "node-cron": "^4.6.0",
+    "twilio": "^6.1.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
