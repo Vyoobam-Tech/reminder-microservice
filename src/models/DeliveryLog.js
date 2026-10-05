@@ -14,6 +14,8 @@ const deliveryLogSchema = new mongoose.Schema(
     attempt: { type: Number, default: 1 },
     nextRetryAt: Date,
     sentAt: Date,
+    trigger: { type: String, enum: ["scheduled", "manual", "retry"], default: "scheduled" },
+    occurrence: Date,
   },
   { timestamps: true }
 );
