@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import connectDB from "./config/db.js";
 import reminderRoutes from "./routes/reminderRoutes.js";
 import { startScheduler } from "./scheduler/scheduleReminder.js";
+import twimlRoutes from "./routes/twimlRoutes.js";
 
 const app = express();
 
@@ -19,7 +20,7 @@ app.get("/health", (req, res) => {
 
 app.use("/api", rateLimit({ windowMs: 60 * 1000, limit: 300 }));
 app.use("/api/v1/reminders", reminderRoutes);
-
+app.use("/twiml", twimlRoutes);
 // 404
 app.use((req, res) => res.status(404).json({ success: false, message: "Route not found" }));
 
