@@ -2,7 +2,9 @@ import cron from "node-cron";
 import moment from "moment-timezone";
 import Reminder from "../models/Reminder.js";
 import DeliveryLog from "../models/DeliveryLog.js";
-import { deliver } from "../services/deliveryService.js";
+// import { deliver } from "../services/deliveryService.js";
+import { runAttempt } from "../services/deliveryRunner.js";
+import { startRetryWorker } from "./retryDeliveries.js";
 
 // Scheduler epdi work aagum
 // ------------------------
@@ -48,43 +50,39 @@ export const computeNextRun = (reminder, after = new Date()) => {
  * Oru channel fail aanalum matradhu thodarum.
  */
 export const triggerReminder = async (reminder, { trigger = "scheduled", occurrence } = {}) => {
-  const logs = [];
+  let sent = 0;
+  let failed = 0; // retrying-um idhula serum
 
   for (const channel of reminder.channels) {
     const to = channel === "email" ? reminder.recipient.email : reminder.recipient.phone;
     if (!to) continue;
 
-    let result;
+    // Send panra MUNNADI pending log create: crash aanalum record irukkum
+    let log;
     try {
-      result = await deliver(channel, reminder);
+      log = await DeliveryLog.create({
+        reminderId: reminder._id,
+        applicationId: reminder.applicationId,
+        tenantId: reminder.tenantId,
+        channel,
+        to,
+        status: "pending",
+        attempt: 1,
+        trigger,
+        occurrence: occurrence || reminder.scheduledAt,
+      });
     } catch (e) {
-      result = { ok: false, providerId: null, error: e.message };
+      console.error(`❌ Could not create delivery log (${channel}):`, e.message);
+      failed++;
+      continue;
     }
 
-    logs.push({
-      reminderId: reminder._id,
-      applicationId: reminder.applicationId,
-      tenantId: reminder.tenantId,
-      channel,
-      to,
-      status: result.ok ? "sent" : "failed",
-      providerId: result.providerId || undefined,
-      error: result.error || undefined,
-      attempt: 1,
-      trigger,
-      occurrence: occurrence || reminder.scheduledAt,
-      sentAt: result.ok ? new Date() : undefined,
-    });
+    const result = await runAttempt(log, reminder);
+    if (result.ok) sent++;
+    else failed++;
   }
 
-  if (logs.length) {
-    await DeliveryLog.insertMany(logs).catch((e) =>
-      console.error("❌ Failed to write delivery logs:", e.message)
-    );
-  }
-
-  const sent = logs.filter((l) => l.status === "sent").length;
-  return { sent, failed: logs.length - sent };
+  return { sent, failed };
 };
 
 let polling = false;
@@ -123,10 +121,10 @@ export const runDueReminders = async () => {
       else update.$unset = { nextRunAt: "" };
 
       // Claim: vera instance/tick already advance pannala na mattum munneruvom
-      const claimed = await Reminder.findOneAndUpdate(
+           const claimed = await Reminder.findOneAndUpdate(
         { _id: r._id, status: "active", nextRunAt: occurrence },
         update,
-        { new: true }
+        { returnDocument: "after" }
       );
       if (!claimed) continue;
 
@@ -152,6 +150,7 @@ export const startScheduler = async () => {
   }
 
   cron.schedule("* * * * *", runDueReminders);
+    startRetryWorker();
   const pending = await Reminder.countDocuments({ status: "active" });
   console.log(`Scheduler started: ${pending} active reminders`);
   runDueReminders();

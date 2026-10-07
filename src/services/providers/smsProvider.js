@@ -1,5 +1,5 @@
 import twilio from "twilio";
-
+import { twilioRetryable } from "./retryable.js";
 let client;
 const getClient = () => {
   if (!client) {
@@ -33,10 +33,15 @@ export const sendSMS = async (reminder) => {
     return { ok: false, providerId: null, error: "Sender and receiver cannot be the same number" };
   }
 
-  try {
+   try {
     const msg = await getClient().messages.create({ body: reminder.message, from, to });
     return { ok: true, providerId: msg.sid, error: null };
   } catch (err) {
-    return { ok: false, providerId: null, error: `${err.code ? `[${err.code}] ` : ""}${err.message}` };
+    return {
+      ok: false,
+      providerId: null,
+      error: `${err.code ? `[${err.code}] ` : ""}${err.message}`,
+      retryable: twilioRetryable(err),
+    };
   }
 };

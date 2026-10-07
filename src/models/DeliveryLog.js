@@ -8,7 +8,7 @@ const deliveryLogSchema = new mongoose.Schema(
 
     channel: { type: String, enum: ["email", "sms", "whatsapp", "voice"], required: true },
     to: String,
-    status: { type: String, enum: ["pending", "sent", "failed"], default: "pending" },
+   status: { type: String, enum: ["pending", "sent", "retrying", "failed"], default: "pending" },
     providerId: String,   // Twilio SID / SendGrid message id
     error: String,
     attempt: { type: Number, default: 1 },
@@ -19,5 +19,6 @@ const deliveryLogSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+deliveryLogSchema.index({ status: 1, nextRetryAt: 1 });
 
 export default mongoose.model("DeliveryLog", deliveryLogSchema);
