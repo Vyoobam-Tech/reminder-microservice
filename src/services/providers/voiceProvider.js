@@ -1,6 +1,7 @@
 import { getTwilio, twilioError } from "./twilioClient.js";
 import { normalizePhone } from "./phone.js";
 import { signTwiml } from "./twimlSigner.js";
+import { twilioRetryable } from "./retryable.js";
 
 const buildSpokenText = (name, message, language) => {
   if (language === "ta-IN") return `வணக்கம் ${name}. இது உங்கள் நினைவூட்டல் அழைப்பு. ${message} நன்றி.`;
@@ -33,10 +34,10 @@ export const sendVoice = async (reminder) => {
     return { ok: false, providerId: null, error: "Message too long for a voice call" };
   }
 
-  try {
+   try {
     const call = await getTwilio().calls.create({ to, from, url });
     return { ok: true, providerId: call.sid, error: null };
   } catch (err) {
-    return { ok: false, providerId: null, error: twilioError(err) };
+    return { ok: false, providerId: null, error: twilioError(err), retryable: twilioRetryable(err) };
   }
 };
