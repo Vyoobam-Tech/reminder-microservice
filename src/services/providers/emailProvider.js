@@ -1,4 +1,5 @@
 import sgMail from "@sendgrid/mail";
+import { sendgridRetryable } from "./retryable.js";
 
 let configured = false;
 const configure = () => {
@@ -23,7 +24,7 @@ export const sendEmail = async (reminder) => {
       ? `<br/><img src="${escapeHtml(mediaUrl)}" alt="Reminder image" style="max-width:600px;" />`
       : "");
 
-  try {
+    try {
     const [response] = await sgMail.send({
       to: recipient.email,
       from: process.env.SENDGRID_FROM,
@@ -34,6 +35,6 @@ export const sendEmail = async (reminder) => {
     return { ok: true, providerId: response.headers["x-message-id"] || null, error: null };
   } catch (err) {
     const detail = err.response?.body?.errors?.[0]?.message || err.message;
-    return { ok: false, providerId: null, error: detail };
+    return { ok: false, providerId: null, error: detail, retryable: sendgridRetryable(err) };
   }
 };
