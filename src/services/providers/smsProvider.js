@@ -1,4 +1,5 @@
 import twilio from "twilio";
+import { statusCallbackUrl } from "./twilioClient.js";
 import { twilioRetryable } from "./retryable.js";
 let client;
 const getClient = () => {
@@ -34,7 +35,11 @@ export const sendSMS = async (reminder) => {
   }
 
    try {
-    const msg = await getClient().messages.create({ body: reminder.message, from, to });
+    const cb = statusCallbackUrl();
+    const msg = await getClient().messages.create({
+      body: reminder.message, from, to,
+      ...(cb ? { statusCallback: cb } : {}),
+    });
     return { ok: true, providerId: msg.sid, error: null };
   } catch (err) {
     return {
