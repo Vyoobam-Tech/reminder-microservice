@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Reminder from "../models/Reminder.js";
 import DeliveryLog from "../models/DeliveryLog.js";
+import { triggerReminder } from "../scheduler/scheduleReminder.js";
 
 const findOwned = async (req) => {
   if (!mongoose.isValidObjectId(req.params.id)) return null;
@@ -149,6 +150,29 @@ export const getReminderLogs = async (req, res, next) => {
 
     const logs = await DeliveryLog.find({ reminderId: reminder._id, applicationId: req.application._id }).sort({ createdAt: -1 });
     res.json({ success: true, data: logs });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const sendNow = async (req, res, next) => {
+  try {
+    const reminder = await findOwned(req);
+    if (!reminder) return notFound(res);
+
+    if (["cancelled", "expired"].includes(reminder.status)) {
+      return res.status(400).json({ success: false, message: `Cannot send a ${reminder.status} reminder` });
+    }
+
+    const requested = req.body.channels;
+    const channels = requested ? requested.filter((c) => reminder.channels.includes(c)) : reminder.channels;
+    if (!channels.length) {
+      return res.status(400).json({ success: false, message: "No valid channels for this reminder" });
+    }
+
+    // Manual send runCount/nextRunAt-a maathaadhu
+    const result = await triggerReminder(reminder, { trigger: "manual", occurrence: new Date(), channels });
+    res.json({ success: true, data: result });
   } catch (err) {
     next(err);
   }

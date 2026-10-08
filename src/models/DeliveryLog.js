@@ -16,9 +16,14 @@ const deliveryLogSchema = new mongoose.Schema(
     sentAt: Date,
     trigger: { type: String, enum: ["scheduled", "manual", "retry"], default: "scheduled" },
     occurrence: Date,
+        deliveryStatus: String,     // provider status: queued, sent, delivered, undelivered, failed, read, completed...
+    deliveredAt: Date,
+    providerError: String,
+    providerStatusAt: Date,
   },
   { timestamps: true }
 );
+deliveryLogSchema.index({ providerId: 1 });
 deliveryLogSchema.index({ status: 1, nextRetryAt: 1 });
 
 export default mongoose.model("DeliveryLog", deliveryLogSchema);
