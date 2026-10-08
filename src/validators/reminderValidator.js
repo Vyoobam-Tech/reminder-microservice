@@ -34,3 +34,7 @@ export const createReminderSchema = baseSchema.superRefine((data, ctx) => {
 });
 
 export const updateReminderSchema = baseSchema.partial();
+
+export const sendReminderSchema = z.object({
+  channels: z.array(z.enum(["email", "sms", "whatsapp", "voice"])).min(1).optional(),
+});

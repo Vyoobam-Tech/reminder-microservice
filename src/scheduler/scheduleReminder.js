@@ -49,11 +49,11 @@ export const computeNextRun = (reminder, after = new Date()) => {
  * Reminder-a ovvoru channel vazhiyum anuppi DeliveryLog ezhudhum.
  * Oru channel fail aanalum matradhu thodarum.
  */
-export const triggerReminder = async (reminder, { trigger = "scheduled", occurrence } = {}) => {
+export const triggerReminder = async (reminder, { trigger = "scheduled", occurrence, channels } = {}) => {
   let sent = 0;
   let failed = 0; // retrying-um idhula serum
 
-  for (const channel of reminder.channels) {
+  for (const channel of channels || reminder.channels) {
     const to = channel === "email" ? reminder.recipient.email : reminder.recipient.phone;
     if (!to) continue;
 

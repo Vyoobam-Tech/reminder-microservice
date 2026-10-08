@@ -1,4 +1,4 @@
-import { getTwilio, twilioError } from "./twilioClient.js";
+import { getTwilio, statusCallbackUrl, twilioError } from "./twilioClient.js";
 import { normalizePhone } from "./phone.js";
 import { signTwiml } from "./twimlSigner.js";
 import { twilioRetryable } from "./retryable.js";
@@ -35,7 +35,11 @@ export const sendVoice = async (reminder) => {
   }
 
    try {
-    const call = await getTwilio().calls.create({ to, from, url });
+    const cb = statusCallbackUrl();
+    const call = await getTwilio().calls.create({
+      to, from, url,
+      ...(cb ? { statusCallback: cb, statusCallbackEvent: ["initiated", "ringing", "answered", "completed"] } : {}),
+    });
     return { ok: true, providerId: call.sid, error: null };
   } catch (err) {
     return { ok: false, providerId: null, error: twilioError(err), retryable: twilioRetryable(err) };

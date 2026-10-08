@@ -12,5 +12,10 @@ export const getTwilio = () => {
   }
   return client;
 };
+export const statusCallbackUrl = () => {
+  const base = process.env.BASE_URL;
+  if (!base || /localhost|127\.0\.0\.1/.test(base)) return undefined;
+  return `${base.replace(/\/$/, "")}/webhooks/twilio/status`;
+};
 
 export const twilioError = (err) => `${err.code ? `[${err.code}] ` : ""}${err.message}`;
