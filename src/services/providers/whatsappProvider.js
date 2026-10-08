@@ -1,4 +1,4 @@
-import { getTwilio, twilioError } from "./twilioClient.js";
+import { getTwilio, statusCallbackUrl, twilioError } from "./twilioClient.js";
 import { normalizePhone } from "./phone.js";
 import { twilioRetryable } from "./retryable.js";
 export const sendWhatsApp = async (reminder) => {
@@ -13,6 +13,7 @@ export const sendWhatsApp = async (reminder) => {
       to: `whatsapp:${phone}`,
       body: reminder.message,
       ...(reminder.mediaUrl ? { mediaUrl: [reminder.mediaUrl] } : {}),
+      ...(statusCallbackUrl() ? { statusCallback: statusCallbackUrl() } : {}),
     });
     return { ok: true, providerId: msg.sid, error: null };
   } catch (err) {
